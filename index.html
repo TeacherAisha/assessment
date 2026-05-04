@@ -90,36 +90,6 @@ iframe {
   width: 180px;
 }
 
-/* 🔴 BIG FULLSCREEN OVERLAY */
-#controlPanel {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  display: none;
-  z-index: 99999;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  text-align: center;
-}
-
-#controlPanel h1 {
-  font-size: 40px;
-  margin-bottom: 20px;
-}
-
-#reenterBtn {
-  font-size: 30px;
-  padding: 30px 50px;
-  background: red;
-  color: white;
-  border: none;
-  border-radius: 15px;
-  cursor: pointer;
-}
-
 /* LOG */
 #logBox {
   position: fixed;
@@ -131,7 +101,6 @@ iframe {
   font-size: 12px;
   z-index: 2000;
 }
-
 </style>
 </head>
 
@@ -142,7 +111,7 @@ iframe {
   <p>
     • 40-minute timer<br><br>
     • No tab switching<br><br>
-    • Fullscreen required (desktop only)
+    • Fullscreen used where supported
   </p>
   <button id="startBtn">Start Test</button>
 </div>
@@ -152,13 +121,6 @@ iframe {
 <div id="exitWrapper">
   <div id="exitWarningText">Submit your assessment before exiting.</div>
   <button id="exitTestBtn">Exit Test</button>
-</div>
-
-<!-- 🔴 BIG OVERLAY -->
-<div id="controlPanel">
-  <h1>Fullscreen Lost</h1>
-  <p>Fullscreen lost and reported to admin</p>
-  <button id="reenterBtn">RETURN TO FULLSCREEN</button>
 </div>
 
 <div id="logBox">
@@ -172,41 +134,61 @@ iframe {
 
 // -------- DEVICE DETECTION --------
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const supportsFullscreen = !!document.documentElement.requestFullscreen;
 
 // -------- VARIABLES --------
 let timeLeft = 40 * 60;
 let tabSwitchCount = 0;
 let maxViolations = 3;
 let allowExit = false;
-let watchdogInterval = null;
 let activityLog = [];
 
 // -------- ELEMENTS --------
 const startBtn = document.getElementById("startBtn");
 const warningScreen = document.getElementById("warningScreen");
 const timerDisplay = document.getElementById("timer");
-const controlPanel = document.getElementById("controlPanel");
 const exitWrapper = document.getElementById("exitWrapper");
+
+// -------- LOG --------
+function logEvent(event){
+  let t = new Date().toLocaleTimeString();
+  activityLog.push(`${t} - ${event}`);
+  document.getElementById("logContent").innerHTML =
+    activityLog.join("<br>");
+}
+
+// -------- FULLSCREEN --------
+function enterFullscreen() {
+  return document.documentElement.requestFullscreen?.().catch(()=>{});
+}
+
+function exitFullscreenSafe() {
+  document.exitFullscreen?.().catch(()=>{});
+}
 
 // -------- START --------
 startBtn.addEventListener("click", async () => {
 
-  if (!isMobile) {
-    await document.documentElement.requestFullscreen().catch(()=>{});
-  } else {
-    alert("Mobile mode: fullscreen not enforced");
-  }
-
   warningScreen.style.display = "none";
   exitWrapper.style.display = "flex";
 
+  // ONLY desktop devices with fullscreen support
+  if (!isMobile && supportsFullscreen) {
+    await enterFullscreen();
+    logEvent("Fullscreen enabled");
+  } else {
+    logEvent("Fullscreen skipped (mobile or unsupported)");
+  }
+
   startTimer();
-  startWatchdog();
+
+  logEvent("Test started");
 });
 
 // -------- TIMER --------
 function startTimer() {
   setInterval(() => {
+
     let m = Math.floor(timeLeft/60);
     let s = timeLeft%60;
 
@@ -222,20 +204,18 @@ function startTimer() {
   },1000);
 }
 
-// -------- WATCHDOG --------
-function startWatchdog() {
+// -------- FULLSCREEN LOSS DETECTION (DESKTOP ONLY) --------
+document.addEventListener("fullscreenchange", () => {
 
-  watchdogInterval = setInterval(() => {
-
-    if (!document.fullscreenElement && !allowExit && !isMobile) {
-      controlPanel.style.display = "flex";
-      logEvent("Fullscreen lost and reported to admin");
+  if (!isMobile && supportsFullscreen) {
+    if (!document.fullscreenElement && !allowExit) {
+      alert("Fullscreen exited. Please return focus to the test.");
+      logEvent("Fullscreen exited");
     }
+  }
+});
 
-  }, 500);
-}
-
-// -------- TAB SWITCH --------
+// -------- TAB SWITCH (ALL DEVICES) --------
 document.addEventListener("visibilitychange", () => {
 
   if (document.hidden && !allowExit) {
@@ -251,16 +231,6 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-// -------- RE-ENTER --------
-document.getElementById("reenterBtn").addEventListener("click", async () => {
-
-  await document.documentElement.requestFullscreen().catch(()=>{});
-
-  logEvent("Fullscreen restored");
-
-  controlPanel.style.display = "none";
-});
-
 // -------- EXIT --------
 document.getElementById("exitTestBtn").addEventListener("click", () => {
 
@@ -269,24 +239,14 @@ document.getElementById("exitTestBtn").addEventListener("click", () => {
   submitTest("Clean exit");
 });
 
-// -------- LOG --------
-function logEvent(event){
-  let t = new Date().toLocaleTimeString();
-  activityLog.push(`${t} - ${event}`);
-  document.getElementById("logContent").innerHTML =
-    activityLog.join("<br>");
-}
-
 // -------- SUBMIT --------
 function submitTest(reason){
 
   allowExit = true;
 
-  if (watchdogInterval) clearInterval(watchdogInterval);
+  exitFullscreenSafe();
 
-  document.exitFullscreen().catch(()=>{});
-
-  alert("Test ended: " + reason);
+  logEvent("Test ended: " + reason);
 
   document.body.innerHTML = `
     <div style="
