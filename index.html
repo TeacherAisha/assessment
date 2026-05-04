@@ -74,16 +74,16 @@ body {
   z-index: 1000;
 }
 
-/* FLASH EFFECTS */
+/* FLASH */
 @keyframes flashYellow {
-  0%   { background-color: gold; color: black; }
-  50%  { background-color: transparent; color: white; }
+  0% { background-color: gold; color: black; }
+  50% { background-color: transparent; color: white; }
   100% { background-color: gold; color: black; }
 }
 
 @keyframes flashRed {
-  0%   { background-color: red; color: white; }
-  50%  { background-color: transparent; color: white; }
+  0% { background-color: red; color: white; }
+  50% { background-color: transparent; color: white; }
   100% { background-color: red; color: white; }
 }
 
@@ -143,16 +143,30 @@ body {
   background: grey;
 }
 
-/* FULLSCREEN */
+/* FULLSCREEN OVERLAY (FIXED) */
 #controlPanel {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.95);
   display: none;
-  z-index: 99999;
+  z-index: 999999;
+
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  text-align: center;
+}
+
+/* BUTTON FIX */
+#reenterBtn {
+  font-size: 28px;
+  padding: 25px 45px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 20px;
 }
 
 /* FINAL SCREEN */
@@ -163,9 +177,9 @@ body {
   display: none;
   justify-content: center;
   align-items: center;
-  text-align: center;
   flex-direction: column;
-  z-index: 999999;
+  text-align: center;
+  z-index: 9999999;
   padding: 20px;
 }
 
@@ -234,10 +248,10 @@ iframe {
     <p><b>Rules:</b></p>
     <ul>
       <li>No tab switching is allowed</li>
-      <li>Fullscreen mode required (where supported)</li>
-      <li>All activity is monitored</li>
-      <li>Exit only after submission confirmation</li>
-      <li>After 3 violations, the assessment will end after 20 seconds</li>
+      <li>Fullscreen required (where supported)</li>
+      <li>Monitoring is active</li>
+      <li>Exit only after submission</li>
+      <li>3 violations = termination after 20 seconds</li>
     </ul>
   </div>
 
@@ -267,13 +281,14 @@ iframe {
   <button id="exitTestBtn" disabled>Exit</button>
 </div>
 
-<!-- FULLSCREEN -->
+<!-- FULLSCREEN OVERLAY -->
 <div id="controlPanel">
   <h1>Fullscreen Required</h1>
-  <button id="reenterBtn">RETURN</button>
+  <p>You must return to fullscreen to continue</p>
+  <button id="reenterBtn">RETURN TO FULLSCREEN</button>
 </div>
 
-<!-- FINAL -->
+<!-- FINAL SCREEN -->
 <div id="finalLockScreen">
   <h1>Assessment Ended</h1>
   <p id="terminationReason"></p>
@@ -286,7 +301,7 @@ iframe {
 </div>
 
 <!-- EXAM -->
-<iframe src="https://docs.google.com/forms/d/e/1FAIpQLScg1PYiM-h9NnkjDzM0oG0fzyL26ovUesSjnBhBjrysBXXd4g/viewform?embedded=true"></iframe>
+<iframe src="https://docs.google.com/forms/d/e/1FAIpQLScg1PYiM-h9NnkjDzM0oG0fzyL26ovUesSjnBhBjrysBXXd4g/viewform?embedded=true​"></iframe>
 
 <script>
 
@@ -382,6 +397,29 @@ document.addEventListener("visibilitychange",()=>{
     }
   }
 });
+
+/* FULLSCREEN LOSS */
+document.addEventListener("fullscreenchange",()=>{
+
+  if(!examStarted || isMobile) return;
+
+  if(!document.fullscreenElement && !allowExit && !terminationStarted){
+    document.getElementById("controlPanel").style.display = "flex";
+    logEvent("Fullscreen exited");
+  }
+});
+
+/* RE-ENTER FULLSCREEN */
+document.getElementById("reenterBtn").onclick = async ()=>{
+
+  try {
+    await document.documentElement.requestFullscreen();
+    document.getElementById("controlPanel").style.display = "none";
+    logEvent("Fullscreen restored");
+  } catch(e){
+    alert("Please try again to enable fullscreen.");
+  }
+};
 
 /* END SCREEN */
 function showEndScreen(reason){
