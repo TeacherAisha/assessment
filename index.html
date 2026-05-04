@@ -49,6 +49,18 @@ body {
   z-index: 1000;
 }
 
+/* WARNING COUNTER */
+#warningCounter {
+  position: fixed;
+  top: 60px;
+  right: 280px;
+  background: #222;
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 1000;
+}
+
 /* EXAM */
 iframe {
   width: calc(100% - 260px);
@@ -56,7 +68,7 @@ iframe {
   border: none;
 }
 
-/* LOG SIDEBAR */
+/* LOG */
 #logBox {
   position: fixed;
   top: 0;
@@ -79,11 +91,24 @@ iframe {
 /* EXIT */
 #exitWrapper {
   position: fixed;
-  right: 280px;
+  right: 300px;
   top: 50%;
   transform: translateY(-50%);
   display: none;
   flex-direction: column;
+  align-items: center;
+  z-index: 9999;
+}
+
+#exitWarningText {
+  background: #ffd700;
+  color: black;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  width: 180px;
+  text-align: center;
+  font-weight: bold;
 }
 
 #exitTestBtn {
@@ -92,9 +117,16 @@ iframe {
   color: white;
   border: none;
   border-radius: 10px;
+  width: 180px;
 }
 
-/* FULLSCREEN OVERLAY (DESKTOP ONLY) */
+#exitTestBtn:disabled {
+  background: grey;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* FULLSCREEN BLOCK */
 #controlPanel {
   position: fixed;
   inset: 0;
@@ -116,10 +148,10 @@ iframe {
   border-radius: 15px;
 }
 
-/* TAB WARNING (MOBILE) */
+/* TAB WARNING */
 #tabWarning {
   position: fixed;
-  top: 60px;
+  top: 110px;
   left: 50%;
   transform: translateX(-50%);
   background: red;
@@ -144,6 +176,10 @@ iframe {
     right: 20px;
   }
 
+  #warningCounter {
+    right: 20px;
+  }
+
   #exitWrapper {
     right: 20px;
   }
@@ -164,15 +200,20 @@ iframe {
   <button id="startBtn">Start Test</button>
 </div>
 
-<!-- TIMER -->
 <div id="timer">40:00</div>
-
-<!-- MOBILE TAB WARNING -->
+<div id="warningCounter">Warnings: 0 / 3</div>
 <div id="tabWarning">⚠ You switched tabs. Return to the test.</div>
 
 <!-- EXIT -->
 <div id="exitWrapper">
-  <button id="exitTestBtn">Exit Test</button>
+  <div id="exitWarningText">Submit your assessment before exiting.</div>
+
+  <label style="font-size:14px; margin-bottom:10px;">
+    <input type="checkbox" id="confirmSubmit">
+    I have submitted my form
+  </label>
+
+  <button id="exitTestBtn" disabled>Exit Test</button>
 </div>
 
 <!-- FULLSCREEN BLOCK -->
@@ -188,12 +229,12 @@ iframe {
   <div id="logContent"></div>
 </div>
 
-<!-- EXAM -->
-<iframe src="https://docs.google.com/forms/d/e/1FAIpQLScJkedBESwkGo2fnUQbkH_H-w9hvD4iN27I-5ca4h8pN3HuAg/viewform?embedded=true"></iframe>
+<!-- FORM -->
+<iframe src="https://docs.google.com/forms/d/e/1FAIpQLScJkedBESwkGo2fnUQbkH_H-w9hvD4iN27I-5ca4h8pN3HuAg/viewform?embedded=true​"></iframe>
 
 <script>
 
-// DEVICE CHECK
+// DEVICE
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
 
@@ -206,11 +247,19 @@ let allowExit = false;
 // ELEMENTS
 const controlPanel = document.getElementById("controlPanel");
 const tabWarning = document.getElementById("tabWarning");
+const exitBtn = document.getElementById("exitTestBtn");
+const confirmBox = document.getElementById("confirmSubmit");
 
 // LOG
 function logEvent(msg){
   let t = new Date().toLocaleTimeString();
   document.getElementById("logContent").innerHTML += `${t} - ${msg}<br>`;
+}
+
+// UPDATE WARNING COUNTER
+function updateWarningDisplay() {
+  document.getElementById("warningCounter").textContent =
+    `Warnings: ${tabSwitchCount} / ${maxViolations}`;
 }
 
 // START
@@ -223,7 +272,7 @@ document.getElementById("startBtn").onclick = async () => {
     await document.documentElement.requestFullscreen().catch(()=>{});
     logEvent("Fullscreen enabled");
   } else {
-    logEvent("Mobile / no fullscreen mode");
+    logEvent("Mobile mode");
   }
 
   startTimer();
@@ -246,7 +295,7 @@ function startTimer(){
   },1000);
 }
 
-// FULLSCREEN EXIT (DESKTOP ONLY)
+// FULLSCREEN EXIT
 document.addEventListener("fullscreenchange", () => {
 
   if (!isMobile && supportsFullscreen) {
@@ -261,7 +310,7 @@ document.addEventListener("fullscreenchange", () => {
   }
 });
 
-// REENTER BUTTON
+// REENTER
 document.getElementById("reenterBtn").onclick = async () => {
   await document.documentElement.requestFullscreen().catch(()=>{});
   controlPanel.style.display = "none";
@@ -274,12 +323,13 @@ document.addEventListener("visibilitychange", () => {
 
     tabSwitchCount++;
     logEvent("Tab switch detected");
+    updateWarningDisplay();
 
     if (!isMobile && supportsFullscreen) {
       alert(`Warning (${tabSwitchCount}/${maxViolations})`);
     } else {
       tabWarning.style.display = "block";
-      setTimeout(()=> tabWarning.style.display = "none", 4000);
+      setTimeout(()=> tabWarning.style.display="none",4000);
     }
 
     if (tabSwitchCount >= maxViolations) {
@@ -288,8 +338,13 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// EXIT ENABLE
+confirmBox.addEventListener("change", () => {
+  exitBtn.disabled = !confirmBox.checked;
+});
+
 // EXIT
-document.getElementById("exitTestBtn").onclick = () => {
+exitBtn.onclick = () => {
   if(confirm("Exit test?")){
     submitTest("Exited");
   }
