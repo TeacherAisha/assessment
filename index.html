@@ -41,7 +41,7 @@ body {
 #timer {
   position: fixed;
   top: 10px;
-  right: 20px;
+  right: 280px;
   background: black;
   padding: 10px 20px;
   border-radius: 10px;
@@ -49,19 +49,40 @@ body {
   z-index: 1000;
 }
 
-/* FORM */
+/* EXAM AREA */
 iframe {
-  width: 100%;
+  width: calc(100% - 260px);
   height: 100vh;
   border: none;
-  padding-right: 220px;
+}
+
+/* RIGHT LOG */
+#logBox {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 260px;
+  height: 100vh;
+  background: black;
+  color: #00ff00;
+  padding: 10px;
+  font-size: 12px;
+  z-index: 2000;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 
-/* EXIT UI */
+#logBox b {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: white;
+}
+
+/* EXIT */
 #exitWrapper {
   position: fixed;
-  right: 20px;
+  right: 280px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 999999;
@@ -90,17 +111,41 @@ iframe {
   width: 180px;
 }
 
-/* LOG */
-#logBox {
+/* 🔴 TAB SWITCH WARNING (MOBILE ONLY) */
+#tabWarning {
   position: fixed;
-  bottom: 10px;
-  left: 10px;
-  background: black;
-  color: #00ff00;
-  padding: 10px;
-  font-size: 12px;
-  z-index: 2000;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: red;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 10px;
+  font-weight: bold;
+  z-index: 99999;
+  display: none;
 }
+
+/* MOBILE FIX */
+@media (max-width: 768px) {
+
+  #logBox {
+    display: none;
+  }
+
+  iframe {
+    width: 100%;
+  }
+
+  #timer {
+    right: 20px;
+  }
+
+  #exitWrapper {
+    right: 20px;
+  }
+}
+
 </style>
 </head>
 
@@ -110,7 +155,7 @@ iframe {
   <h1>Secure Online Test</h1>
   <p>
     • 40-minute timer<br><br>
-    • No tab switching<br><br>
+    • No tab switching allowed<br><br>
     • Fullscreen used where supported
   </p>
   <button id="startBtn">Start Test</button>
@@ -118,11 +163,15 @@ iframe {
 
 <div id="timer">40:00</div>
 
+<!-- TAB WARNING (mobile only) -->
+<div id="tabWarning">⚠ You switched tabs. Please return to the test.</div>
+
 <div id="exitWrapper">
   <div id="exitWarningText">Submit your assessment before exiting.</div>
   <button id="exitTestBtn">Exit Test</button>
 </div>
 
+<!-- LOG -->
 <div id="logBox">
   <b>Activity Log</b>
   <div id="logContent"></div>
@@ -148,6 +197,7 @@ const startBtn = document.getElementById("startBtn");
 const warningScreen = document.getElementById("warningScreen");
 const timerDisplay = document.getElementById("timer");
 const exitWrapper = document.getElementById("exitWrapper");
+const tabWarning = document.getElementById("tabWarning");
 
 // -------- LOG --------
 function logEvent(event){
@@ -172,16 +222,14 @@ startBtn.addEventListener("click", async () => {
   warningScreen.style.display = "none";
   exitWrapper.style.display = "flex";
 
-  // ONLY desktop devices with fullscreen support
   if (!isMobile && supportsFullscreen) {
     await enterFullscreen();
     logEvent("Fullscreen enabled");
   } else {
-    logEvent("Fullscreen skipped (mobile or unsupported)");
+    logEvent("Fullscreen skipped (mobile/unsupported)");
   }
 
   startTimer();
-
   logEvent("Test started");
 });
 
@@ -204,18 +252,18 @@ function startTimer() {
   },1000);
 }
 
-// -------- FULLSCREEN LOSS DETECTION (DESKTOP ONLY) --------
+// -------- FULLSCREEN EXIT DETECTION --------
 document.addEventListener("fullscreenchange", () => {
 
   if (!isMobile && supportsFullscreen) {
     if (!document.fullscreenElement && !allowExit) {
-      alert("Fullscreen exited. Please return focus to the test.");
+      alert("Fullscreen exited.");
       logEvent("Fullscreen exited");
     }
   }
 });
 
-// -------- TAB SWITCH (ALL DEVICES) --------
+// -------- TAB SWITCH (UPDATED) --------
 document.addEventListener("visibilitychange", () => {
 
   if (document.hidden && !allowExit) {
@@ -223,7 +271,18 @@ document.addEventListener("visibilitychange", () => {
     tabSwitchCount++;
     logEvent("Tab switch detected");
 
-    alert(`Warning (${tabSwitchCount}/${maxViolations})`);
+    if (!isMobile && supportsFullscreen) {
+      // Desktop: alert only
+      alert(`Warning (${tabSwitchCount}/${maxViolations})`);
+    } 
+    else {
+      // Mobile: banner warning
+      tabWarning.style.display = "block";
+
+      setTimeout(() => {
+        tabWarning.style.display = "none";
+      }, 4000);
+    }
 
     if (tabSwitchCount >= maxViolations) {
       submitTest("Too many tab switches");
@@ -234,7 +293,7 @@ document.addEventListener("visibilitychange", () => {
 // -------- EXIT --------
 document.getElementById("exitTestBtn").addEventListener("click", () => {
 
-  if (!confirm("Exit test? Make sure you submitted.")) return;
+  if (!confirm("Exit test?")) return;
 
   submitTest("Clean exit");
 });
@@ -243,7 +302,6 @@ document.getElementById("exitTestBtn").addEventListener("click", () => {
 function submitTest(reason){
 
   allowExit = true;
-
   exitFullscreenSafe();
 
   logEvent("Test ended: " + reason);
