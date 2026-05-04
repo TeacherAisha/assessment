@@ -32,13 +32,13 @@ body {
   background: rgba(255,255,255,0.08);
   padding: 20px;
   border-radius: 12px;
-  max-width: 500px;
+  max-width: 520px;
   text-align: left;
   line-height: 1.6;
   margin-bottom: 15px;
 }
 
-/* ACCEPT */
+/* START BUTTON */
 #startBtn {
   padding: 15px 30px;
   font-size: 20px;
@@ -75,7 +75,7 @@ body {
   z-index: 1000;
 }
 
-/* LOG */
+/* LOG PANEL */
 #logBox {
   position: fixed;
   top: 0;
@@ -89,7 +89,7 @@ body {
   overflow-y: auto;
 }
 
-/* EXIT */
+/* EXIT PANEL */
 #exitWrapper {
   position: fixed;
   right: 300px;
@@ -124,7 +124,7 @@ body {
   background: grey;
 }
 
-/* FULLSCREEN */
+/* FULLSCREEN OVERLAY */
 #controlPanel {
   position: fixed;
   inset: 0;
@@ -150,14 +150,14 @@ body {
   padding: 20px;
 }
 
-/* EXAM */
+/* EXAM AREA */
 iframe {
   width: calc(100% - 260px);
   height: 100vh;
   border: none;
 }
 
-/* MOBILE */
+/* MOBILE ADJUSTMENTS */
 @media (max-width:768px){
 
   #logBox { display:none; }
@@ -203,7 +203,7 @@ iframe {
 
 <body>
 
-<!-- START -->
+<!-- START SCREEN -->
 <div id="warningScreen">
 
   <h1>Secured OLC Assessment</h1>
@@ -214,7 +214,7 @@ iframe {
     <p><b>Rules:</b></p>
     <ul>
       <li>No tab switching is allowed</li>
-      <li>Fullscreen mode required</li>
+      <li>Fullscreen mode required (where supported)</li>
       <li>All activity is monitored</li>
       <li>Exit only after submission confirmation</li>
       <li>After 3 violations, the assessment will end and all work will be lost</li>
@@ -231,7 +231,7 @@ iframe {
   <button id="startBtn" disabled>Start Assessment</button>
 </div>
 
-<!-- TOP -->
+<!-- TOP BAR -->
 <div id="timer">40:00</div>
 <div id="warningCounter">Warnings: 0 / 3</div>
 
@@ -261,7 +261,7 @@ iframe {
 
 <!-- LOG -->
 <div id="logBox">
-  <b>Log</b>
+  <b>Activity Log</b>
   <div id="logContent"></div>
 </div>
 
@@ -270,13 +270,23 @@ iframe {
 
 <script>
 
+/* DEVICE */
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const supportsFullscreen = !!document.documentElement.requestFullscreen;
+
+/* STATE */
 let examStarted = false;
 let timeLeft = 40 * 60;
 let tabSwitchCount = 0;
 let maxViolations = 3;
 let allowExit = false;
 
-/* ENABLE START */
+/* LOG */
+function logEvent(msg){
+  document.getElementById("logContent").innerHTML += msg + "<br>";
+}
+
+/* START ENABLE */
 document.getElementById("acceptRules").onchange = (e)=>{
   const btn = document.getElementById("startBtn");
 
@@ -297,7 +307,9 @@ document.getElementById("startBtn").onclick = async ()=>{
   document.getElementById("warningScreen").style.display = "none";
   document.getElementById("exitWrapper").style.display = "flex";
 
-  await document.documentElement.requestFullscreen().catch(()=>{});
+  if(!isMobile && supportsFullscreen){
+    await document.documentElement.requestFullscreen().catch(()=>{});
+  }
 
   startTimer();
 };
@@ -335,6 +347,8 @@ document.addEventListener("visibilitychange",()=>{
     document.getElementById("warningCounter").textContent =
       `Warnings: ${tabSwitchCount} / ${maxViolations}`;
 
+    logEvent("Tab switch detected");
+
     if(tabSwitchCount >= maxViolations){
       submitTest("3 violations detected");
     }
@@ -353,13 +367,31 @@ document.getElementById("exitTestBtn").onclick = ()=>{
   }
 };
 
-/* FULLSCREEN */
+/* FULLSCREEN (DESKTOP ONLY) */
 document.addEventListener("fullscreenchange",()=>{
+
+  if(!examStarted || isMobile) return;
+
   if(!document.fullscreenElement){
+    logEvent("Fullscreen exited");
     document.getElementById("controlPanel").style.display = "flex";
+  } else {
+    logEvent("Fullscreen entered");
   }
 });
 
+/* WATCHDOG (DESKTOP ONLY) */
+setInterval(()=>{
+
+  if(!examStarted || isMobile) return;
+
+  if(!document.fullscreenElement){
+    logEvent("Fullscreen not active (watchdog)");
+  }
+
+},2000);
+
+/* REENTER FULLSCREEN */
 document.getElementById("reenterBtn").onclick = ()=>{
   document.documentElement.requestFullscreen();
   document.getElementById("controlPanel").style.display = "none";
@@ -372,7 +404,7 @@ function submitTest(reason){
 
   document.getElementById("finalLockScreen").style.display = "flex";
   document.getElementById("terminationReason").innerHTML =
-    `Reason: ${reason}`;
+    "Reason: " + reason;
 
   document.querySelector("iframe").style.display = "none";
   document.getElementById("timer").style.display = "none";
