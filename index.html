@@ -14,7 +14,7 @@ body {
   overflow: hidden;
 }
 
-/* START SCREEN */
+/* ================= START SCREEN ================= */
 #warningScreen {
   position: fixed;
   inset: 0;
@@ -38,7 +38,6 @@ body {
   margin-bottom: 15px;
 }
 
-/* START BUTTON */
 #startBtn {
   padding: 15px 30px;
   font-size: 20px;
@@ -54,7 +53,7 @@ body {
   cursor: pointer;
 }
 
-/* TOP BAR */
+/* ================= TOP BAR ================= */
 #timer {
   position: fixed;
   top: 10px;
@@ -75,7 +74,7 @@ body {
   z-index: 1000;
 }
 
-/* LOG PANEL */
+/* ================= LOG ================= */
 #logBox {
   position: fixed;
   top: 0;
@@ -89,12 +88,11 @@ body {
   overflow-y: auto;
 }
 
-/* EXIT PANEL */
+/* ================= EXIT ================= */
 #exitWrapper {
   position: fixed;
   right: 300px;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 10px;
   display: none;
   flex-direction: column;
   align-items: center;
@@ -124,7 +122,7 @@ body {
   background: grey;
 }
 
-/* FULLSCREEN OVERLAY */
+/* ================= FULLSCREEN ================= */
 #controlPanel {
   position: fixed;
   inset: 0;
@@ -136,7 +134,7 @@ body {
   flex-direction: column;
 }
 
-/* FINAL SCREEN */
+/* ================= FINAL SCREEN ================= */
 #finalLockScreen {
   position: fixed;
   inset: 0;
@@ -150,17 +148,19 @@ body {
   padding: 20px;
 }
 
-/* EXAM AREA */
+/* ================= EXAM ================= */
 iframe {
   width: calc(100% - 260px);
   height: 100vh;
   border: none;
 }
 
-/* MOBILE ADJUSTMENTS */
+/* ================= MOBILE ================= */
 @media (max-width:768px){
 
-  #logBox { display:none; }
+  #logBox {
+    display: none;
+  }
 
   #timer, #warningCounter {
     position: fixed;
@@ -170,10 +170,18 @@ iframe {
     align-items: center;
     justify-content: center;
     font-size: 14px;
+    z-index: 1000;
   }
 
-  #timer { left:0; width:50%; }
-  #warningCounter { left:50%; width:50%; }
+  #timer {
+    left: 0;
+    width: 50%;
+  }
+
+  #warningCounter {
+    left: 50%;
+    width: 50%;
+  }
 
   iframe {
     width: 100%;
@@ -196,7 +204,9 @@ iframe {
     padding: 8px;
   }
 
-  #exitWarningText { display:none; }
+  #exitWarningText {
+    display: none;
+  }
 }
 </style>
 </head>
@@ -270,11 +280,9 @@ iframe {
 
 <script>
 
-/* DEVICE */
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
 
-/* STATE */
 let examStarted = false;
 let timeLeft = 40 * 60;
 let tabSwitchCount = 0;
@@ -286,7 +294,7 @@ function logEvent(msg){
   document.getElementById("logContent").innerHTML += msg + "<br>";
 }
 
-/* START ENABLE */
+/* ENABLE START */
 document.getElementById("acceptRules").onchange = (e)=>{
   const btn = document.getElementById("startBtn");
 
@@ -380,7 +388,7 @@ document.addEventListener("fullscreenchange",()=>{
   }
 });
 
-/* WATCHDOG (DESKTOP ONLY) */
+/* WATCHDOG */
 setInterval(()=>{
 
   if(!examStarted || isMobile) return;
@@ -391,13 +399,13 @@ setInterval(()=>{
 
 },2000);
 
-/* REENTER FULLSCREEN */
+/* REENTER */
 document.getElementById("reenterBtn").onclick = ()=>{
   document.documentElement.requestFullscreen();
   document.getElementById("controlPanel").style.display = "none";
 };
 
-/* FINAL SUBMIT */
+/* FINAL SCREEN */
 function submitTest(reason){
 
   allowExit = true;
