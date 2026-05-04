@@ -74,15 +74,25 @@ body {
   z-index: 1000;
 }
 
-/* ================= STRONG FLASH ================= */
-@keyframes flashRedLong {
-  0%   { background-color: red; color: white; transform: scale(1); }
-  50%  { background-color: transparent; color: white; transform: scale(1.05); }
-  100% { background-color: red; color: white; transform: scale(1); }
+/* FLASH EFFECTS */
+@keyframes flashYellow {
+  0%   { background-color: gold; color: black; }
+  50%  { background-color: transparent; color: white; }
+  100% { background-color: gold; color: black; }
 }
 
-.flash-long {
-  animation: flashRedLong 0.5s infinite;
+@keyframes flashRed {
+  0%   { background-color: red; color: white; }
+  50%  { background-color: transparent; color: white; }
+  100% { background-color: red; color: white; }
+}
+
+.flash-yellow {
+  animation: flashYellow 0.6s infinite !important;
+}
+
+.flash-red {
+  animation: flashRed 0.6s infinite !important;
 }
 
 /* LOG */
@@ -206,9 +216,7 @@ iframe {
     padding: 8px;
   }
 
-  #exitWarningText {
-    display: none;
-  }
+  #exitWarningText { display:none; }
 }
 </style>
 </head>
@@ -229,7 +237,7 @@ iframe {
       <li>Fullscreen mode required (where supported)</li>
       <li>All activity is monitored</li>
       <li>Exit only after submission confirmation</li>
-      <li>After 3 violations, the assessment will end and all work will be lost</li>
+      <li>After 3 violations, the assessment will end after 20 seconds</li>
     </ul>
   </div>
 
@@ -282,24 +290,24 @@ iframe {
 
 <script>
 
+/* STATE */
+let examStarted = false;
+let allowExit = false;
+let tabSwitchCount = 0;
+let terminationStarted = false;
+let timeLeft = 40 * 60;
+
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
-
-let examStarted = false;
-let timeLeft = 40 * 60;
-let tabSwitchCount = 0;
-let maxViolations = 3;
-let allowExit = false;
 
 /* LOG */
 function logEvent(msg){
   document.getElementById("logContent").innerHTML += msg + "<br>";
 }
 
-/* START ENABLE */
+/* START */
 document.getElementById("acceptRules").onchange = (e)=>{
   const btn = document.getElementById("startBtn");
-
   if(e.target.checked){
     btn.disabled = false;
     btn.classList.add("active");
@@ -309,7 +317,6 @@ document.getElementById("acceptRules").onchange = (e)=>{
   }
 };
 
-/* START */
 document.getElementById("startBtn").onclick = async ()=>{
 
   examStarted = true;
@@ -326,9 +333,7 @@ document.getElementById("startBtn").onclick = async ()=>{
 
 /* TIMER */
 function startTimer(){
-
   setInterval(()=>{
-
     let m = Math.floor(timeLeft/60);
     let s = timeLeft%60;
 
@@ -341,89 +346,57 @@ function startTimer(){
       timer.textContent = "TIME EXPIRED";
       timer.style.background = "red";
     }
-
   },1000);
 }
 
-/* TAB SWITCH */
+/* VIOLATIONS */
 document.addEventListener("visibilitychange",()=>{
 
-  if(!examStarted) return;
+  if(!examStarted || allowExit || terminationStarted) return;
 
-  if(document.hidden && !allowExit){
+  if(document.hidden){
 
     tabSwitchCount++;
 
     document.getElementById("warningCounter").textContent =
-      `Warnings: ${tabSwitchCount} / ${maxViolations}`;
+      `Warnings: ${tabSwitchCount} / 3`;
 
-    logEvent("Tab switch detected");
+    const counter = document.getElementById("warningCounter");
 
-    if(tabSwitchCount >= maxViolations){
-      submitTest("3 violations detected");
+    counter.classList.remove("flash-yellow","flash-red");
+    void counter.offsetWidth;
+
+    if(tabSwitchCount < 3){
+      counter.classList.add("flash-yellow");
+    }
+
+    if(tabSwitchCount >= 3){
+
+      terminationStarted = true;
+
+      counter.classList.add("flash-red");
+
+      setTimeout(()=>{
+        showEndScreen("3 violations detected");
+      },20000);
     }
   }
 });
 
-/* EXIT */
-document.getElementById("confirmSubmit").onchange = ()=>{
-  document.getElementById("exitTestBtn").disabled =
-    !document.getElementById("confirmSubmit").checked;
-};
-
-document.getElementById("exitTestBtn").onclick = ()=>{
-  if(confirm("Exit test?")){
-    submitTest("Clean exit");
-  }
-};
-
-/* FULLSCREEN */
-document.addEventListener("fullscreenchange",()=>{
-
-  if(!examStarted || isMobile) return;
-
-  if(!document.fullscreenElement){
-    logEvent("Fullscreen exited");
-    document.getElementById("controlPanel").style.display = "flex";
-  }
-});
-
-/* WATCHDOG */
-setInterval(()=>{
-
-  if(!examStarted || isMobile) return;
-
-  if(!document.fullscreenElement){
-    logEvent("Fullscreen not active (watchdog)");
-  }
-
-},2000);
-
-/* FINAL + FLASH FIXED */
-function submitTest(reason){
+/* END SCREEN */
+function showEndScreen(reason){
 
   allowExit = true;
 
-  const counter = document.getElementById("warningCounter");
+  document.getElementById("finalLockScreen").style.display = "flex";
+  document.getElementById("terminationReason").innerHTML =
+    "Reason: " + reason;
 
-  // 🔥 FORCE RESTART ANIMATION (KEY FIX)
-  counter.classList.remove("flash-long");
-  void counter.offsetWidth;
-  counter.classList.add("flash-long");
-
-  setTimeout(()=>{
-
-    document.getElementById("finalLockScreen").style.display = "flex";
-    document.getElementById("terminationReason").innerHTML =
-      "Reason: " + reason;
-
-    document.querySelector("iframe").style.display = "none";
-    document.getElementById("timer").style.display = "none";
-    document.getElementById("warningCounter").style.display = "none";
-    document.getElementById("exitWrapper").style.display = "none";
-    document.getElementById("logBox").style.display = "none";
-
-  },25000);
+  document.querySelector("iframe").style.display = "none";
+  document.getElementById("timer").style.display = "none";
+  document.getElementById("warningCounter").style.display = "none";
+  document.getElementById("exitWrapper").style.display = "none";
+  document.getElementById("logBox").style.display = "none";
 }
 
 </script>
