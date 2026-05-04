@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secure Online Test</title>
+<title>Secured OLC Assessment</title>
 
 <style>
 body {
@@ -14,17 +14,33 @@ body {
   overflow: hidden;
 }
 
-/* START SCREEN */
+/* ================= START SCREEN ================= */
 #warningScreen {
   position: fixed;
   inset: 0;
   background: #0a2342;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
   z-index: 9999;
   text-align: center;
+  padding: 20px;
+}
+
+#warningScreen h1 {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+#warningBox {
+  background: rgba(255,255,255,0.08);
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 500px;
+  text-align: left;
+  line-height: 1.6;
+  margin-bottom: 20px;
 }
 
 #startBtn {
@@ -34,40 +50,30 @@ body {
   border-radius: 10px;
   background: #00b894;
   color: white;
-  margin-top: 20px;
 }
 
-/* DESKTOP TIMER */
+/* ================= DESKTOP TOP INFO ================= */
 #timer {
   position: fixed;
   top: 10px;
   right: 280px;
   background: black;
-  padding: 10px 20px;
+  padding: 10px 15px;
   border-radius: 10px;
-  font-size: 22px;
   z-index: 1000;
 }
 
-/* WARNING COUNTER */
 #warningCounter {
   position: fixed;
   top: 60px;
   right: 280px;
-  padding: 8px 15px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-weight: bold;
   z-index: 1000;
 }
 
-/* EXAM AREA */
-iframe {
-  width: calc(100% - 260px);
-  height: 100vh;
-  border: none;
-}
-
-/* LOG */
+/* ================= LOG ================= */
 #logBox {
   position: fixed;
   top: 0;
@@ -81,7 +87,7 @@ iframe {
   overflow-y: auto;
 }
 
-/* EXIT WRAPPER */
+/* ================= EXIT ================= */
 #exitWrapper {
   position: fixed;
   right: 300px;
@@ -101,11 +107,10 @@ iframe {
   margin-bottom: 10px;
   width: 180px;
   text-align: center;
-  font-weight: bold;
 }
 
 #exitTestBtn {
-  padding: 15px;
+  padding: 12px;
   background: red;
   color: white;
   border: none;
@@ -119,7 +124,7 @@ iframe {
   cursor: not-allowed;
 }
 
-/* FULLSCREEN BLOCK */
+/* ================= FULLSCREEN BLOCK ================= */
 #controlPanel {
   position: fixed;
   inset: 0;
@@ -131,7 +136,7 @@ iframe {
   flex-direction: column;
 }
 
-/* TAB WARNING */
+/* ================= TAB WARNING ================= */
 #tabWarning {
   position: fixed;
   top: 110px;
@@ -143,49 +148,49 @@ iframe {
   z-index: 99999;
 }
 
-/* ===================== */
-/* MOBILE LAYOUT */
-/* ===================== */
-@media (max-width:768px){
+/* ================= EXAM ================= */
+iframe {
+  width: calc(100% - 260px);
+  height: 100vh;
+  border: none;
+}
 
-  iframe {
-    width: 100%;
-    height: calc(100vh - 110px);
-  }
+/* ================= MOBILE ================= */
+@media (max-width:768px){
 
   #logBox {
     display: none;
   }
 
   /* TOP BAR */
-  #timer {
+  #timer, #warningCounter {
+    position: fixed;
     top: 0;
-    left: 0;
-    right: 50%;
-    width: 50%;
-    height: 50px;
-
+    height: 45px;
     display: flex;
     justify-content: center;
     align-items: center;
+    font-size: 14px;
+  }
 
+  #timer {
+    left: 0;
+    width: 50%;
     border-radius: 0;
-    font-size: 16px;
   }
 
   #warningCounter {
-    top: 0;
     left: 50%;
-    right: 0;
     width: 50%;
-    height: 50px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
     border-radius: 0;
-    font-size: 14px;
+  }
+
+  /* SAFE FORM SPACE */
+  iframe {
+    width: 100%;
+    height: calc(100vh - 105px);
+    margin-top: 45px;
+    margin-bottom: 60px;
   }
 
   /* BOTTOM BAR */
@@ -202,7 +207,8 @@ iframe {
     align-items: center;
 
     background: rgba(0,0,0,0.95);
-    padding: 10px;
+    padding: 8px;
+    height: 60px;
   }
 
   #exitWarningText {
@@ -210,7 +216,7 @@ iframe {
   }
 
   #tabWarning {
-    top: 60px;
+    top: 55px;
   }
 }
 </style>
@@ -218,42 +224,57 @@ iframe {
 
 <body>
 
-<!-- START -->
+<!-- ================= START SCREEN ================= -->
 <div id="warningScreen">
-  <h1>Secure Online Test</h1>
-  <button id="startBtn">Start Test</button>
+
+  <h1>Secured OLC Assessment</h1>
+
+  <div id="warningBox">
+    <p><b>Assessment Duration:</b> 40 minutes</p>
+
+    <p><b>Rules:</b></p>
+    <ul>
+      <li>No tab switching is allowed</li>
+      <li>Fullscreen mode required (desktop only)</li>
+      <li>All activity is monitored</li>
+      <li>Violations will be recorded</li>
+      <li>Exit only after submission confirmation</li>
+    </ul>
+  </div>
+
+  <button id="startBtn">Start Assessment</button>
 </div>
 
-<!-- TOP INFO -->
+<!-- ================= TOP INFO ================= -->
 <div id="timer">40:00</div>
 <div id="warningCounter">Warnings: 0 / 3</div>
 <div id="tabWarning">⚠ Tab switch detected</div>
 
-<!-- EXIT -->
+<!-- ================= EXIT ================= -->
 <div id="exitWrapper">
   <div id="exitWarningText">Submit before exiting</div>
 
   <label>
     <input type="checkbox" id="confirmSubmit">
-    I have submitted
+    Submitted
   </label>
 
-  <button id="exitTestBtn" disabled>Exit Test</button>
+  <button id="exitTestBtn" disabled>Exit</button>
 </div>
 
-<!-- FULLSCREEN -->
+<!-- ================= FULLSCREEN BLOCK ================= -->
 <div id="controlPanel">
   <h1>Fullscreen Required</h1>
   <button id="reenterBtn">RETURN</button>
 </div>
 
-<!-- LOG -->
+<!-- ================= LOG ================= -->
 <div id="logBox">
-  <b>Activity Log</b>
+  <b>Log</b>
   <div id="logContent"></div>
 </div>
 
-<!-- FORM -->
+<!-- ================= FORM ================= -->
 <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScJkedBESwkGo2fnUQbkH_H-w9hvD4iN27I-5ca4h8pN3HuAg/viewform?embedded=true​"></iframe>
 
 <script>
@@ -274,7 +295,7 @@ function logEvent(m){
   document.getElementById("logContent").innerHTML += m + "<br>";
 }
 
-/* WARNING COLOUR */
+/* WARNING COLOR */
 function updateWarningDisplay(){
   const el = document.getElementById("warningCounter");
   el.textContent = `Warnings: ${tabSwitchCount} / ${maxViolations}`;
@@ -298,8 +319,8 @@ document.getElementById("startBtn").onclick = async ()=>{
   }
 
   setInterval(()=>{
-    let m = Math.floor(timeLeft/60);
-    let s = timeLeft%60;
+    let m=Math.floor(timeLeft/60);
+    let s=timeLeft%60;
     document.getElementById("timer").textContent =
       `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     timeLeft--;
