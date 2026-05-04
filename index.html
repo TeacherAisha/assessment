@@ -14,7 +14,7 @@ body {
   overflow: hidden;
 }
 
-/* ================= START SCREEN ================= */
+/* START SCREEN */
 #warningScreen {
   position: fixed;
   inset: 0;
@@ -38,6 +38,7 @@ body {
   margin-bottom: 15px;
 }
 
+/* START BUTTON */
 #startBtn {
   padding: 15px 30px;
   font-size: 20px;
@@ -53,7 +54,7 @@ body {
   cursor: pointer;
 }
 
-/* ================= TOP BAR ================= */
+/* TOP BAR */
 #timer {
   position: fixed;
   top: 10px;
@@ -74,7 +75,18 @@ body {
   z-index: 1000;
 }
 
-/* ================= LOG ================= */
+/* FLASH EFFECT */
+@keyframes flashRedLong {
+  0% { background: red; color: white; }
+  50% { background: transparent; color: white; }
+  100% { background: red; color: white; }
+}
+
+.flash-long {
+  animation: flashRedLong 0.6s infinite;
+}
+
+/* LOG */
 #logBox {
   position: fixed;
   top: 0;
@@ -88,7 +100,7 @@ body {
   overflow-y: auto;
 }
 
-/* ================= EXIT ================= */
+/* EXIT */
 #exitWrapper {
   position: fixed;
   right: 300px;
@@ -122,7 +134,7 @@ body {
   background: grey;
 }
 
-/* ================= FULLSCREEN ================= */
+/* FULLSCREEN */
 #controlPanel {
   position: fixed;
   inset: 0;
@@ -134,7 +146,7 @@ body {
   flex-direction: column;
 }
 
-/* ================= FINAL SCREEN ================= */
+/* FINAL SCREEN */
 #finalLockScreen {
   position: fixed;
   inset: 0;
@@ -148,14 +160,14 @@ body {
   padding: 20px;
 }
 
-/* ================= EXAM ================= */
+/* EXAM */
 iframe {
   width: calc(100% - 260px);
   height: 100vh;
   border: none;
 }
 
-/* ================= MOBILE ================= */
+/* MOBILE */
 @media (max-width:768px){
 
   #logBox {
@@ -213,7 +225,7 @@ iframe {
 
 <body>
 
-<!-- START SCREEN -->
+<!-- START -->
 <div id="warningScreen">
 
   <h1>Secured OLC Assessment</h1>
@@ -241,7 +253,7 @@ iframe {
   <button id="startBtn" disabled>Start Assessment</button>
 </div>
 
-<!-- TOP BAR -->
+<!-- TOP -->
 <div id="timer">40:00</div>
 <div id="warningCounter">Warnings: 0 / 3</div>
 
@@ -263,7 +275,7 @@ iframe {
   <button id="reenterBtn">RETURN</button>
 </div>
 
-<!-- FINAL SCREEN -->
+<!-- FINAL -->
 <div id="finalLockScreen">
   <h1>Assessment Ended</h1>
   <p id="terminationReason"></p>
@@ -294,7 +306,7 @@ function logEvent(msg){
   document.getElementById("logContent").innerHTML += msg + "<br>";
 }
 
-/* ENABLE START */
+/* START ENABLE */
 document.getElementById("acceptRules").onchange = (e)=>{
   const btn = document.getElementById("startBtn");
 
@@ -322,7 +334,7 @@ document.getElementById("startBtn").onclick = async ()=>{
   startTimer();
 };
 
-/* TIMER (NO AUTO END) */
+/* TIMER */
 function startTimer(){
 
   setInterval(()=>{
@@ -383,8 +395,6 @@ document.addEventListener("fullscreenchange",()=>{
   if(!document.fullscreenElement){
     logEvent("Fullscreen exited");
     document.getElementById("controlPanel").style.display = "flex";
-  } else {
-    logEvent("Fullscreen entered");
   }
 });
 
@@ -405,20 +415,28 @@ document.getElementById("reenterBtn").onclick = ()=>{
   document.getElementById("controlPanel").style.display = "none";
 };
 
-/* FINAL SCREEN */
+/* TERMINATION (25s FLASH) */
 function submitTest(reason){
 
   allowExit = true;
 
-  document.getElementById("finalLockScreen").style.display = "flex";
-  document.getElementById("terminationReason").innerHTML =
-    "Reason: " + reason;
+  const counter = document.getElementById("warningCounter");
 
-  document.querySelector("iframe").style.display = "none";
-  document.getElementById("timer").style.display = "none";
-  document.getElementById("warningCounter").style.display = "none";
-  document.getElementById("exitWrapper").style.display = "none";
-  document.getElementById("logBox").style.display = "none";
+  counter.classList.add("flash-long");
+
+  setTimeout(()=>{
+
+    document.getElementById("finalLockScreen").style.display = "flex";
+    document.getElementById("terminationReason").innerHTML =
+      "Reason: " + reason;
+
+    document.querySelector("iframe").style.display = "none";
+    document.getElementById("timer").style.display = "none";
+    document.getElementById("warningCounter").style.display = "none";
+    document.getElementById("exitWrapper").style.display = "none";
+    document.getElementById("logBox").style.display = "none";
+
+  },25000);
 }
 
 </script>
