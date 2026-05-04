@@ -43,13 +43,24 @@ body {
   margin-bottom: 20px;
 }
 
+/* CHECKBOX AREA */
+#acceptBox {
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
 #startBtn {
   padding: 15px 30px;
   font-size: 20px;
   border: none;
   border-radius: 10px;
-  background: #00b894;
+  background: grey;
   color: white;
+  cursor: not-allowed;
+}
+
+#startBtn.active {
+  background: #00b894;
   cursor: pointer;
 }
 
@@ -150,41 +161,6 @@ body {
   z-index: 99999;
 }
 
-/* ================= MODAL ================= */
-#violationModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 999999;
-}
-
-#violationBox {
-  background: white;
-  color: black;
-  padding: 25px;
-  border-radius: 12px;
-  text-align: center;
-  width: 320px;
-}
-
-#violationBox h2 {
-  color: red;
-}
-
-#ackBtn {
-  margin-top: 15px;
-  padding: 12px 20px;
-  background: #00b894;
-  border: none;
-  color: white;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
 /* ================= EXAM ================= */
 iframe {
   width: calc(100% - 260px);
@@ -232,9 +208,11 @@ iframe {
     left: 0;
     right: 0;
     transform: none;
+
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
+
     background: rgba(0,0,0,0.95);
     padding: 8px;
     height: 60px;
@@ -261,14 +239,20 @@ iframe {
     <ul>
       <li>No tab switching is allowed</li>
       <li>Fullscreen mode required</li>
-      <li>No copy or paste allowed</li>
-      <li>Copy/paste actions will be detected</li>
       <li>All activity is monitored</li>
       <li>Exit only after submission confirmation</li>
     </ul>
   </div>
 
-  <button id="startBtn">Start Assessment</button>
+  <!-- ACCEPT RULES -->
+  <div id="acceptBox">
+    <label>
+      <input type="checkbox" id="acceptRules">
+      I accept the rules
+    </label>
+  </div>
+
+  <button id="startBtn" disabled>Start Assessment</button>
 </div>
 
 <!-- TOP INFO -->
@@ -294,15 +278,6 @@ iframe {
   <button id="reenterBtn">RETURN</button>
 </div>
 
-<!-- MODAL -->
-<div id="violationModal">
-  <div id="violationBox">
-    <h2>Action Detected</h2>
-    <p id="violationText"></p>
-    <button id="ackBtn">I have understood</button>
-  </div>
-</div>
-
 <!-- LOG -->
 <div id="logBox">
   <b>Log</b>
@@ -310,13 +285,14 @@ iframe {
 </div>
 
 <!-- EXAM -->
-<iframe src="https://docs.google.com/forms/d/e/1FAIpQLScg1PYiM-h9NnkjDzM0oG0fzyL26ovUesSjnBhBjrysBXXd4g/viewform?embedded=true​"></iframe>
+<iframe src="https://docs.google.com/forms/d/e/1FAIpQLScg1PYiM-h9NnkjDzM0oG0fzyL26ovUesSjnBhBjrysBXXd4g/viewform?embedded=true"></iframe>
 
 <script>
 
 const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
 
+/* STATE */
 let examStarted = false;
 let timeLeft = 40 * 60;
 let tabSwitchCount = 0;
@@ -342,15 +318,18 @@ function updateWarningDisplay(){
   }
 }
 
-/* MODAL */
-function showViolationModal(message){
-  document.getElementById("violationText").textContent = message;
-  document.getElementById("violationModal").style.display = "flex";
-}
+/* ENABLE START BUTTON */
+document.getElementById("acceptRules").addEventListener("change", (e)=>{
+  const btn = document.getElementById("startBtn");
 
-document.getElementById("ackBtn").onclick = () => {
-  document.getElementById("violationModal").style.display = "none";
-};
+  if(e.target.checked){
+    btn.disabled = false;
+    btn.classList.add("active");
+  } else {
+    btn.disabled = true;
+    btn.classList.remove("active");
+  }
+});
 
 /* START */
 document.getElementById("startBtn").onclick = async ()=>{
@@ -387,27 +366,6 @@ document.addEventListener("visibilitychange",()=>{
       submitTest("Too many violations");
     }
   }
-});
-
-/* COPY */
-document.addEventListener("copy", ()=>{
-  if(!examStarted) return;
-  logEvent("Copy detected");
-  showViolationModal("Copy/Paste detected. This is not allowed.");
-});
-
-/* PASTE */
-document.addEventListener("paste", ()=>{
-  if(!examStarted) return;
-  logEvent("Paste detected");
-  showViolationModal("Copy/Paste detected. This is not allowed.");
-});
-
-/* RIGHT CLICK */
-document.addEventListener("contextmenu", (e)=>{
-  if(!examStarted) return;
-  e.preventDefault();
-  logEvent("Right-click blocked");
 });
 
 /* EXIT */
