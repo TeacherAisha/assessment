@@ -49,14 +49,14 @@ body {
   z-index: 1000;
 }
 
-/* EXAM AREA */
+/* EXAM */
 iframe {
   width: calc(100% - 260px);
   height: 100vh;
   border: none;
 }
 
-/* RIGHT LOG */
+/* LOG SIDEBAR */
 #logBox {
   position: fixed;
   top: 0;
@@ -67,15 +67,12 @@ iframe {
   color: #00ff00;
   padding: 10px;
   font-size: 12px;
-  z-index: 2000;
   overflow-y: auto;
-  box-sizing: border-box;
 }
 
 #logBox b {
   display: block;
   margin-bottom: 10px;
-  font-size: 14px;
   color: white;
 }
 
@@ -85,21 +82,8 @@ iframe {
   right: 280px;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 999999;
   display: none;
   flex-direction: column;
-  align-items: center;
-}
-
-#exitWarningText {
-  background: #ffd700;
-  color: black;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  width: 180px;
-  text-align: center;
-  font-weight: bold;
 }
 
 #exitTestBtn {
@@ -108,25 +92,44 @@ iframe {
   color: white;
   border: none;
   border-radius: 10px;
-  width: 180px;
 }
 
-/* 🔴 TAB SWITCH WARNING (MOBILE ONLY) */
+/* FULLSCREEN OVERLAY (DESKTOP ONLY) */
+#controlPanel {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: none;
+  z-index: 99999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+#reenterBtn {
+  font-size: 28px;
+  padding: 30px 50px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 15px;
+}
+
+/* TAB WARNING (MOBILE) */
 #tabWarning {
   position: fixed;
   top: 60px;
   left: 50%;
   transform: translateX(-50%);
   background: red;
-  color: white;
   padding: 15px 25px;
   border-radius: 10px;
-  font-weight: bold;
-  z-index: 99999;
   display: none;
+  z-index: 99999;
 }
 
-/* MOBILE FIX */
+/* MOBILE */
 @media (max-width: 768px) {
 
   #logBox {
@@ -145,30 +148,38 @@ iframe {
     right: 20px;
   }
 }
-
 </style>
 </head>
 
 <body>
 
+<!-- START -->
 <div id="warningScreen">
   <h1>Secure Online Test</h1>
   <p>
     • 40-minute timer<br><br>
     • No tab switching allowed<br><br>
-    • Fullscreen used where supported
+    • Fullscreen required on desktop
   </p>
   <button id="startBtn">Start Test</button>
 </div>
 
+<!-- TIMER -->
 <div id="timer">40:00</div>
 
-<!-- TAB WARNING (mobile only) -->
-<div id="tabWarning">⚠ You switched tabs. Please return to the test.</div>
+<!-- MOBILE TAB WARNING -->
+<div id="tabWarning">⚠ You switched tabs. Return to the test.</div>
 
+<!-- EXIT -->
 <div id="exitWrapper">
-  <div id="exitWarningText">Submit your assessment before exiting.</div>
   <button id="exitTestBtn">Exit Test</button>
+</div>
+
+<!-- FULLSCREEN BLOCK -->
+<div id="controlPanel">
+  <h1>Fullscreen Required</h1>
+  <p>Please return to fullscreen to continue</p>
+  <button id="reenterBtn">RETURN TO FULLSCREEN</button>
 </div>
 
 <!-- LOG -->
@@ -177,70 +188,54 @@ iframe {
   <div id="logContent"></div>
 </div>
 
+<!-- EXAM -->
 <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScJkedBESwkGo2fnUQbkH_H-w9hvD4iN27I-5ca4h8pN3HuAg/viewform?embedded=true"></iframe>
 
 <script>
 
-// -------- DEVICE DETECTION --------
+// DEVICE CHECK
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
 
-// -------- VARIABLES --------
+// VARIABLES
 let timeLeft = 40 * 60;
 let tabSwitchCount = 0;
 let maxViolations = 3;
 let allowExit = false;
-let activityLog = [];
 
-// -------- ELEMENTS --------
-const startBtn = document.getElementById("startBtn");
-const warningScreen = document.getElementById("warningScreen");
-const timerDisplay = document.getElementById("timer");
-const exitWrapper = document.getElementById("exitWrapper");
+// ELEMENTS
+const controlPanel = document.getElementById("controlPanel");
 const tabWarning = document.getElementById("tabWarning");
 
-// -------- LOG --------
-function logEvent(event){
+// LOG
+function logEvent(msg){
   let t = new Date().toLocaleTimeString();
-  activityLog.push(`${t} - ${event}`);
-  document.getElementById("logContent").innerHTML =
-    activityLog.join("<br>");
+  document.getElementById("logContent").innerHTML += `${t} - ${msg}<br>`;
 }
 
-// -------- FULLSCREEN --------
-function enterFullscreen() {
-  return document.documentElement.requestFullscreen?.().catch(()=>{});
-}
+// START
+document.getElementById("startBtn").onclick = async () => {
 
-function exitFullscreenSafe() {
-  document.exitFullscreen?.().catch(()=>{});
-}
-
-// -------- START --------
-startBtn.addEventListener("click", async () => {
-
-  warningScreen.style.display = "none";
-  exitWrapper.style.display = "flex";
+  document.getElementById("warningScreen").style.display = "none";
+  document.getElementById("exitWrapper").style.display = "flex";
 
   if (!isMobile && supportsFullscreen) {
-    await enterFullscreen();
+    await document.documentElement.requestFullscreen().catch(()=>{});
     logEvent("Fullscreen enabled");
   } else {
-    logEvent("Fullscreen skipped (mobile/unsupported)");
+    logEvent("Mobile / no fullscreen mode");
   }
 
   startTimer();
-  logEvent("Test started");
-});
+};
 
-// -------- TIMER --------
-function startTimer() {
-  setInterval(() => {
-
+// TIMER
+function startTimer(){
+  setInterval(()=>{
     let m = Math.floor(timeLeft/60);
     let s = timeLeft%60;
 
-    timerDisplay.textContent =
+    document.getElementById("timer").textContent =
       `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
     timeLeft--;
@@ -248,22 +243,31 @@ function startTimer() {
     if(timeLeft < 0){
       submitTest("Time expired");
     }
-
   },1000);
 }
 
-// -------- FULLSCREEN EXIT DETECTION --------
+// FULLSCREEN EXIT (DESKTOP ONLY)
 document.addEventListener("fullscreenchange", () => {
 
   if (!isMobile && supportsFullscreen) {
+
     if (!document.fullscreenElement && !allowExit) {
-      alert("Fullscreen exited.");
+      controlPanel.style.display = "flex";
       logEvent("Fullscreen exited");
+    } else {
+      controlPanel.style.display = "none";
+      logEvent("Fullscreen restored");
     }
   }
 });
 
-// -------- TAB SWITCH (UPDATED) --------
+// REENTER BUTTON
+document.getElementById("reenterBtn").onclick = async () => {
+  await document.documentElement.requestFullscreen().catch(()=>{});
+  controlPanel.style.display = "none";
+};
+
+// TAB SWITCH
 document.addEventListener("visibilitychange", () => {
 
   if (document.hidden && !allowExit) {
@@ -272,16 +276,10 @@ document.addEventListener("visibilitychange", () => {
     logEvent("Tab switch detected");
 
     if (!isMobile && supportsFullscreen) {
-      // Desktop: alert only
       alert(`Warning (${tabSwitchCount}/${maxViolations})`);
-    } 
-    else {
-      // Mobile: banner warning
+    } else {
       tabWarning.style.display = "block";
-
-      setTimeout(() => {
-        tabWarning.style.display = "none";
-      }, 4000);
+      setTimeout(()=> tabWarning.style.display = "none", 4000);
     }
 
     if (tabSwitchCount >= maxViolations) {
@@ -290,36 +288,23 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-// -------- EXIT --------
-document.getElementById("exitTestBtn").addEventListener("click", () => {
+// EXIT
+document.getElementById("exitTestBtn").onclick = () => {
+  if(confirm("Exit test?")){
+    submitTest("Exited");
+  }
+};
 
-  if (!confirm("Exit test?")) return;
-
-  submitTest("Clean exit");
-});
-
-// -------- SUBMIT --------
+// SUBMIT
 function submitTest(reason){
-
   allowExit = true;
-  exitFullscreenSafe();
 
-  logEvent("Test ended: " + reason);
+  document.exitFullscreen?.().catch(()=>{});
 
   document.body.innerHTML = `
-    <div style="
-      height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      background:#0a2342;
-      color:white;
-      font-size:22px;
-      text-align:center;
-      flex-direction:column;
-    ">
-      <h1>Thank You</h1>
-      <p>Thank you for submitting your work.</p>
+    <div style="display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;">
+      <h1>Test Ended</h1>
+      <p>${reason}</p>
     </div>
   `;
 }
