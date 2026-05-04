@@ -14,26 +14,39 @@ body {
   overflow: hidden;
 }
 
-/* START */
+/* START SCREEN */
 #warningScreen {
   position: fixed;
   inset: 0;
   background: #0a2342;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
   z-index: 9999;
+  text-align: center;
 }
 
-/* TIMER */
+#startBtn {
+  padding: 15px 30px;
+  font-size: 20px;
+  border: none;
+  border-radius: 10px;
+  background: #00b894;
+  color: white;
+  margin-top: 20px;
+}
+
+/* DESKTOP TIMER */
 #timer {
   position: fixed;
   top: 10px;
   right: 280px;
   background: black;
-  padding: 10px;
+  padding: 10px 20px;
   border-radius: 10px;
+  font-size: 22px;
+  z-index: 1000;
 }
 
 /* WARNING COUNTER */
@@ -44,9 +57,10 @@ body {
   padding: 8px 15px;
   border-radius: 8px;
   font-weight: bold;
+  z-index: 1000;
 }
 
-/* EXAM */
+/* EXAM AREA */
 iframe {
   width: calc(100% - 260px);
   height: 100vh;
@@ -56,16 +70,18 @@ iframe {
 /* LOG */
 #logBox {
   position: fixed;
+  top: 0;
   right: 0;
   width: 260px;
   height: 100vh;
   background: black;
-  padding: 10px;
   color: #00ff00;
+  padding: 10px;
+  font-size: 12px;
   overflow-y: auto;
 }
 
-/* EXIT */
+/* EXIT WRAPPER */
 #exitWrapper {
   position: fixed;
   right: 300px;
@@ -74,6 +90,7 @@ iframe {
   display: none;
   flex-direction: column;
   align-items: center;
+  z-index: 9999;
 }
 
 #exitWarningText {
@@ -84,13 +101,22 @@ iframe {
   margin-bottom: 10px;
   width: 180px;
   text-align: center;
+  font-weight: bold;
 }
 
-/* LOCKED STATE */
-.locked {
-  background: grey !important;
-  cursor: not-allowed;
+#exitTestBtn {
+  padding: 15px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  width: 180px;
+}
+
+#exitTestBtn:disabled {
+  background: grey;
   opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* FULLSCREEN BLOCK */
@@ -99,10 +125,10 @@ iframe {
   inset: 0;
   background: rgba(0,0,0,0.95);
   display: none;
+  z-index: 99999;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  z-index: 99999;
 }
 
 /* TAB WARNING */
@@ -114,28 +140,96 @@ iframe {
   background: red;
   padding: 10px 20px;
   display: none;
+  z-index: 99999;
 }
 
-/* MOBILE */
+/* ===================== */
+/* MOBILE LAYOUT */
+/* ===================== */
 @media (max-width:768px){
-  #logBox{display:none;}
-  iframe{width:100%;}
-  #timer,#warningCounter,#exitWrapper{right:20px;}
+
+  iframe {
+    width: 100%;
+    height: calc(100vh - 110px);
+  }
+
+  #logBox {
+    display: none;
+  }
+
+  /* TOP BAR */
+  #timer {
+    top: 0;
+    left: 0;
+    right: 50%;
+    width: 50%;
+    height: 50px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 0;
+    font-size: 16px;
+  }
+
+  #warningCounter {
+    top: 0;
+    left: 50%;
+    right: 0;
+    width: 50%;
+    height: 50px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 0;
+    font-size: 14px;
+  }
+
+  /* BOTTOM BAR */
+  #exitWrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    transform: none;
+
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+
+    background: rgba(0,0,0,0.95);
+    padding: 10px;
+  }
+
+  #exitWarningText {
+    display: none;
+  }
+
+  #tabWarning {
+    top: 60px;
+  }
 }
 </style>
 </head>
 
 <body>
 
+<!-- START -->
 <div id="warningScreen">
   <h1>Secure Online Test</h1>
   <button id="startBtn">Start Test</button>
 </div>
 
+<!-- TOP INFO -->
 <div id="timer">40:00</div>
 <div id="warningCounter">Warnings: 0 / 3</div>
-<div id="tabWarning">⚠ Tab switching detected</div>
+<div id="tabWarning">⚠ Tab switch detected</div>
 
+<!-- EXIT -->
 <div id="exitWrapper">
   <div id="exitWarningText">Submit before exiting</div>
 
@@ -144,19 +238,22 @@ iframe {
     I have submitted
   </label>
 
-  <button id="exitTestBtn" class="locked" disabled>Exit Test</button>
+  <button id="exitTestBtn" disabled>Exit Test</button>
 </div>
 
+<!-- FULLSCREEN -->
 <div id="controlPanel">
   <h1>Fullscreen Required</h1>
   <button id="reenterBtn">RETURN</button>
 </div>
 
+<!-- LOG -->
 <div id="logBox">
-  <b>Log</b>
+  <b>Activity Log</b>
   <div id="logContent"></div>
 </div>
 
+<!-- FORM -->
 <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScJkedBESwkGo2fnUQbkH_H-w9hvD4iN27I-5ca4h8pN3HuAg/viewform?embedded=true​"></iframe>
 
 <script>
@@ -164,7 +261,7 @@ iframe {
 const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
 
-let timeLeft = 40*60;
+let timeLeft = 40 * 60;
 let tabSwitchCount = 0;
 let maxViolations = 3;
 let allowExit = false;
@@ -172,43 +269,44 @@ let allowExit = false;
 const exitBtn = document.getElementById("exitTestBtn");
 const confirmBox = document.getElementById("confirmSubmit");
 
-// LOG
+/* LOG */
 function logEvent(m){
-  document.getElementById("logContent").innerHTML += m+"<br>";
+  document.getElementById("logContent").innerHTML += m + "<br>";
 }
 
-// WARNING COLOUR SYSTEM
+/* WARNING COLOUR */
 function updateWarningDisplay(){
-  let el = document.getElementById("warningCounter");
+  const el = document.getElementById("warningCounter");
   el.textContent = `Warnings: ${tabSwitchCount} / ${maxViolations}`;
 
-  if(tabSwitchCount <=1){
+  if(tabSwitchCount <= 1){
     el.style.background = "green";
-  } else if(tabSwitchCount ==2){
+  } else if(tabSwitchCount == 2){
     el.style.background = "orange";
   } else {
     el.style.background = "red";
   }
 }
 
-// START
+/* START */
 document.getElementById("startBtn").onclick = async ()=>{
   document.getElementById("warningScreen").style.display="none";
   document.getElementById("exitWrapper").style.display="flex";
 
   if(!isMobile && supportsFullscreen){
-    await document.documentElement.requestFullscreen();
+    await document.documentElement.requestFullscreen().catch(()=>{});
   }
 
   setInterval(()=>{
-    let m=Math.floor(timeLeft/60);
-    let s=timeLeft%60;
-    document.getElementById("timer").textContent=`${m}:${s}`;
+    let m = Math.floor(timeLeft/60);
+    let s = timeLeft%60;
+    document.getElementById("timer").textContent =
+      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     timeLeft--;
   },1000);
 };
 
-// FULLSCREEN
+/* FULLSCREEN */
 document.addEventListener("fullscreenchange",()=>{
   if(!isMobile && !document.fullscreenElement){
     document.getElementById("controlPanel").style.display="flex";
@@ -220,7 +318,7 @@ document.getElementById("reenterBtn").onclick=()=>{
   document.getElementById("controlPanel").style.display="none";
 };
 
-// TAB SWITCH
+/* TAB SWITCH */
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden && !allowExit){
     tabSwitchCount++;
@@ -240,28 +338,22 @@ document.addEventListener("visibilitychange",()=>{
   }
 });
 
-// EXIT LOCK SYSTEM
+/* EXIT LOCK */
 confirmBox.addEventListener("change",()=>{
-  if(confirmBox.checked){
-    exitBtn.disabled=false;
-    exitBtn.classList.remove("locked");
-    document.getElementById("exitWarningText").textContent="You may now exit";
-  } else {
-    exitBtn.disabled=true;
-    exitBtn.classList.add("locked");
-  }
+  exitBtn.disabled = !confirmBox.checked;
 });
 
-// EXIT
+/* EXIT */
 exitBtn.onclick=()=>{
   if(confirm("Exit test?")){
     submitTest("Exited");
   }
 };
 
+/* SUBMIT */
 function submitTest(reason){
   allowExit=true;
-  document.body.innerHTML=`<h1>${reason}</h1>`;
+  document.body.innerHTML = `<h1>${reason}</h1>`;
 }
 
 </script>
