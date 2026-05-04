@@ -50,9 +50,10 @@ body {
   border-radius: 10px;
   background: #00b894;
   color: white;
+  cursor: pointer;
 }
 
-/* ================= DESKTOP TOP INFO ================= */
+/* ================= TIMER ================= */
 #timer {
   position: fixed;
   top: 10px;
@@ -63,6 +64,7 @@ body {
   z-index: 1000;
 }
 
+/* ================= WARNING COUNTER ================= */
 #warningCounter {
   position: fixed;
   top: 60px;
@@ -124,7 +126,7 @@ body {
   cursor: not-allowed;
 }
 
-/* ================= FULLSCREEN BLOCK ================= */
+/* ================= FULLSCREEN ================= */
 #controlPanel {
   position: fixed;
   inset: 0;
@@ -148,6 +150,41 @@ body {
   z-index: 99999;
 }
 
+/* ================= MODAL ================= */
+#violationModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
+}
+
+#violationBox {
+  background: white;
+  color: black;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+  width: 320px;
+}
+
+#violationBox h2 {
+  color: red;
+}
+
+#ackBtn {
+  margin-top: 15px;
+  padding: 12px 20px;
+  background: #00b894;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
 /* ================= EXAM ================= */
 iframe {
   width: calc(100% - 260px);
@@ -162,7 +199,6 @@ iframe {
     display: none;
   }
 
-  /* TOP BAR */
   #timer, #warningCounter {
     position: fixed;
     top: 0;
@@ -176,16 +212,13 @@ iframe {
   #timer {
     left: 0;
     width: 50%;
-    border-radius: 0;
   }
 
   #warningCounter {
     left: 50%;
     width: 50%;
-    border-radius: 0;
   }
 
-  /* SAFE FORM SPACE */
   iframe {
     width: 100%;
     height: calc(100vh - 105px);
@@ -193,19 +226,15 @@ iframe {
     margin-bottom: 60px;
   }
 
-  /* BOTTOM BAR */
   #exitWrapper {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-
     transform: none;
-
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
-
     background: rgba(0,0,0,0.95);
     padding: 8px;
     height: 60px;
@@ -214,17 +243,13 @@ iframe {
   #exitWarningText {
     display: none;
   }
-
-  #tabWarning {
-    top: 55px;
-  }
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= START SCREEN ================= -->
+<!-- START SCREEN -->
 <div id="warningScreen">
 
   <h1>Secured OLC Assessment</h1>
@@ -235,9 +260,10 @@ iframe {
     <p><b>Rules:</b></p>
     <ul>
       <li>No tab switching is allowed</li>
-      <li>Fullscreen mode required (desktop only)</li>
+      <li>Fullscreen mode required</li>
+      <li>No copy or paste allowed</li>
+      <li>Copy/paste actions will be detected</li>
       <li>All activity is monitored</li>
-      <li>Violations will be recorded</li>
       <li>Exit only after submission confirmation</li>
     </ul>
   </div>
@@ -245,12 +271,12 @@ iframe {
   <button id="startBtn">Start Assessment</button>
 </div>
 
-<!-- ================= TOP INFO ================= -->
+<!-- TOP INFO -->
 <div id="timer">40:00</div>
 <div id="warningCounter">Warnings: 0 / 3</div>
-<div id="tabWarning">⚠ Tab switch detected</div>
+<div id="tabWarning">⚠ Activity detected</div>
 
-<!-- ================= EXIT ================= -->
+<!-- EXIT -->
 <div id="exitWrapper">
   <div id="exitWarningText">Submit before exiting</div>
 
@@ -262,19 +288,28 @@ iframe {
   <button id="exitTestBtn" disabled>Exit</button>
 </div>
 
-<!-- ================= FULLSCREEN BLOCK ================= -->
+<!-- FULLSCREEN -->
 <div id="controlPanel">
   <h1>Fullscreen Required</h1>
   <button id="reenterBtn">RETURN</button>
 </div>
 
-<!-- ================= LOG ================= -->
+<!-- MODAL -->
+<div id="violationModal">
+  <div id="violationBox">
+    <h2>Action Detected</h2>
+    <p id="violationText"></p>
+    <button id="ackBtn">I have understood</button>
+  </div>
+</div>
+
+<!-- LOG -->
 <div id="logBox">
   <b>Log</b>
   <div id="logContent"></div>
 </div>
 
-<!-- ================= FORM ================= -->
+<!-- EXAM -->
 <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScJkedBESwkGo2fnUQbkH_H-w9hvD4iN27I-5ca4h8pN3HuAg/viewform?embedded=true​"></iframe>
 
 <script>
@@ -282,20 +317,18 @@ iframe {
 const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
 
+let examStarted = false;
 let timeLeft = 40 * 60;
 let tabSwitchCount = 0;
 let maxViolations = 3;
 let allowExit = false;
-
-const exitBtn = document.getElementById("exitTestBtn");
-const confirmBox = document.getElementById("confirmSubmit");
 
 /* LOG */
 function logEvent(m){
   document.getElementById("logContent").innerHTML += m + "<br>";
 }
 
-/* WARNING COLOR */
+/* WARNING */
 function updateWarningDisplay(){
   const el = document.getElementById("warningCounter");
   el.textContent = `Warnings: ${tabSwitchCount} / ${maxViolations}`;
@@ -309,8 +342,21 @@ function updateWarningDisplay(){
   }
 }
 
+/* MODAL */
+function showViolationModal(message){
+  document.getElementById("violationText").textContent = message;
+  document.getElementById("violationModal").style.display = "flex";
+}
+
+document.getElementById("ackBtn").onclick = () => {
+  document.getElementById("violationModal").style.display = "none";
+};
+
 /* START */
 document.getElementById("startBtn").onclick = async ()=>{
+
+  examStarted = true;
+
   document.getElementById("warningScreen").style.display="none";
   document.getElementById("exitWrapper").style.display="flex";
 
@@ -327,6 +373,55 @@ document.getElementById("startBtn").onclick = async ()=>{
   },1000);
 };
 
+/* TAB SWITCH */
+document.addEventListener("visibilitychange",()=>{
+
+  if(!examStarted) return;
+
+  if(document.hidden && !allowExit){
+    tabSwitchCount++;
+    updateWarningDisplay();
+    logEvent("Tab switch detected");
+
+    if(tabSwitchCount>=maxViolations){
+      submitTest("Too many violations");
+    }
+  }
+});
+
+/* COPY */
+document.addEventListener("copy", ()=>{
+  if(!examStarted) return;
+  logEvent("Copy detected");
+  showViolationModal("Copy/Paste detected. This is not allowed.");
+});
+
+/* PASTE */
+document.addEventListener("paste", ()=>{
+  if(!examStarted) return;
+  logEvent("Paste detected");
+  showViolationModal("Copy/Paste detected. This is not allowed.");
+});
+
+/* RIGHT CLICK */
+document.addEventListener("contextmenu", (e)=>{
+  if(!examStarted) return;
+  e.preventDefault();
+  logEvent("Right-click blocked");
+});
+
+/* EXIT */
+document.getElementById("confirmSubmit").onchange = ()=>{
+  document.getElementById("exitTestBtn").disabled =
+    !document.getElementById("confirmSubmit").checked;
+};
+
+document.getElementById("exitTestBtn").onclick = ()=>{
+  if(confirm("Exit test?")){
+    submitTest("Exited");
+  }
+};
+
 /* FULLSCREEN */
 document.addEventListener("fullscreenchange",()=>{
   if(!isMobile && !document.fullscreenElement){
@@ -337,38 +432,6 @@ document.addEventListener("fullscreenchange",()=>{
 document.getElementById("reenterBtn").onclick=()=>{
   document.documentElement.requestFullscreen();
   document.getElementById("controlPanel").style.display="none";
-};
-
-/* TAB SWITCH */
-document.addEventListener("visibilitychange",()=>{
-  if(document.hidden && !allowExit){
-    tabSwitchCount++;
-    updateWarningDisplay();
-
-    if(isMobile){
-      let w=document.getElementById("tabWarning");
-      w.style.display="block";
-      setTimeout(()=>w.style.display="none",3000);
-    } else {
-      alert("Tab switch detected");
-    }
-
-    if(tabSwitchCount>=maxViolations){
-      submitTest("Too many violations");
-    }
-  }
-});
-
-/* EXIT LOCK */
-confirmBox.addEventListener("change",()=>{
-  exitBtn.disabled = !confirmBox.checked;
-});
-
-/* EXIT */
-exitBtn.onclick=()=>{
-  if(confirm("Exit test?")){
-    submitTest("Exited");
-  }
 };
 
 /* SUBMIT */
