@@ -38,7 +38,6 @@ body {
   margin-bottom: 15px;
 }
 
-/* START BUTTON */
 #startBtn {
   padding: 15px 30px;
   font-size: 20px;
@@ -75,15 +74,15 @@ body {
   z-index: 1000;
 }
 
-/* FLASH EFFECT */
+/* ================= STRONG FLASH ================= */
 @keyframes flashRedLong {
-  0% { background: red; color: white; }
-  50% { background: transparent; color: white; }
-  100% { background: red; color: white; }
+  0%   { background-color: red; color: white; transform: scale(1); }
+  50%  { background-color: transparent; color: white; transform: scale(1.05); }
+  100% { background-color: red; color: white; transform: scale(1); }
 }
 
 .flash-long {
-  animation: flashRedLong 0.6s infinite;
+  animation: flashRedLong 0.5s infinite;
 }
 
 /* LOG */
@@ -170,9 +169,7 @@ iframe {
 /* MOBILE */
 @media (max-width:768px){
 
-  #logBox {
-    display: none;
-  }
+  #logBox { display:none; }
 
   #timer, #warningCounter {
     position: fixed;
@@ -185,15 +182,8 @@ iframe {
     z-index: 1000;
   }
 
-  #timer {
-    left: 0;
-    width: 50%;
-  }
-
-  #warningCounter {
-    left: 50%;
-    width: 50%;
-  }
+  #timer { left:0; width:50%; }
+  #warningCounter { left:50%; width:50%; }
 
   iframe {
     width: 100%;
@@ -387,7 +377,7 @@ document.getElementById("exitTestBtn").onclick = ()=>{
   }
 };
 
-/* FULLSCREEN (DESKTOP ONLY) */
+/* FULLSCREEN */
 document.addEventListener("fullscreenchange",()=>{
 
   if(!examStarted || isMobile) return;
@@ -409,19 +399,16 @@ setInterval(()=>{
 
 },2000);
 
-/* REENTER */
-document.getElementById("reenterBtn").onclick = ()=>{
-  document.documentElement.requestFullscreen();
-  document.getElementById("controlPanel").style.display = "none";
-};
-
-/* TERMINATION (25s FLASH) */
+/* FINAL + FLASH FIXED */
 function submitTest(reason){
 
   allowExit = true;
 
   const counter = document.getElementById("warningCounter");
 
+  // 🔥 FORCE RESTART ANIMATION (KEY FIX)
+  counter.classList.remove("flash-long");
+  void counter.offsetWidth;
   counter.classList.add("flash-long");
 
   setTimeout(()=>{
