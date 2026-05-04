@@ -9,8 +9,8 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #0a2342;
-  color: white;
+  background: #EAF3FF; /* ✅ soft blue background */
+  color: #1b1b1b;
   overflow: hidden;
 }
 
@@ -18,24 +18,29 @@ body {
 #warningScreen {
   position: fixed;
   inset: 0;
-  background: #0a2342;
+  background: #EAF3FF;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   z-index: 9999;
-  text-align: center;
   padding: 20px;
+  text-align: center;
+}
+
+#warningScreen h1 {
+  color: #1f3b57;
 }
 
 #warningBox {
-  background: rgba(255,255,255,0.08);
+  background: #ffffff;
   padding: 20px;
   border-radius: 12px;
-  max-width: 520px;
+  max-width: 560px;
   text-align: left;
   line-height: 1.6;
   margin-bottom: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 #startBtn {
@@ -49,7 +54,7 @@ body {
 }
 
 #startBtn.active {
-  background: #00b894;
+  background: #2d7dd2;
   cursor: pointer;
 }
 
@@ -58,7 +63,8 @@ body {
   position: fixed;
   top: 10px;
   right: 280px;
-  background: black;
+  background: #1f3b57;
+  color: white;
   padding: 10px 15px;
   border-radius: 10px;
   z-index: 1000;
@@ -72,19 +78,20 @@ body {
   border-radius: 8px;
   font-weight: bold;
   z-index: 1000;
+  background: white;
 }
 
 /* FLASH */
 @keyframes flashYellow {
-  0% { background-color: gold; color: black; }
-  50% { background-color: transparent; color: white; }
-  100% { background-color: gold; color: black; }
+  0% { background-color: #ffd84d; color: black; }
+  50% { background-color: transparent; }
+  100% { background-color: #ffd84d; color: black; }
 }
 
 @keyframes flashRed {
-  0% { background-color: red; color: white; }
-  50% { background-color: transparent; color: white; }
-  100% { background-color: red; color: white; }
+  0% { background-color: #ff4d4d; color: white; }
+  50% { background-color: transparent; }
+  100% { background-color: #ff4d4d; color: white; }
 }
 
 .flash-yellow {
@@ -102,11 +109,12 @@ body {
   right: 0;
   width: 260px;
   height: 100vh;
-  background: black;
-  color: #00ff00;
+  background: #ffffff;
+  color: #1b1b1b;
   padding: 10px;
   font-size: 12px;
   overflow-y: auto;
+  border-left: 1px solid #ccc;
 }
 
 /* EXIT */
@@ -121,8 +129,8 @@ body {
 }
 
 #exitWarningText {
-  background: #ffd700;
-  color: black;
+  background: #fff3b0;
+  color: #333;
   padding: 10px;
   border-radius: 8px;
   margin-bottom: 10px;
@@ -132,46 +140,56 @@ body {
 
 #exitTestBtn {
   padding: 12px;
-  background: red;
+  background: #e63946;
   color: white;
   border: none;
   border-radius: 10px;
   width: 180px;
 }
 
-#exitTestBtn:disabled {
-  background: grey;
-}
-
-/* FULLSCREEN OVERLAY */
+/* FULLSCREEN */
 #controlPanel {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.95);
+  background: rgba(0,0,0,0.92);
   display: none;
   z-index: 999999;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   text-align: center;
+  color: white;
 }
 
 #reenterBtn {
   font-size: 28px;
   padding: 25px 45px;
-  background: red;
+  background: #e63946;
   color: white;
   border: none;
   border-radius: 12px;
-  cursor: pointer;
   margin-top: 20px;
+}
+
+/* TIME UP */
+#timeUpOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: none;
+  z-index: 10000000;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  color: white;
 }
 
 /* FINAL SCREEN */
 #finalLockScreen {
   position: fixed;
   inset: 0;
-  background: #0a2342;
+  background: #EAF3FF;
   display: none;
   justify-content: center;
   align-items: center;
@@ -181,30 +199,7 @@ body {
   padding: 20px;
 }
 
-/* TIME UP OVERLAY */
-#timeUpOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  display: none;
-  z-index: 10000000;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-}
-
-#timeUpOverlay h1 {
-  font-size: 40px;
-  color: red;
-}
-
-#timeUpOverlay p {
-  font-size: 22px;
-  max-width: 600px;
-}
-
-/* EXAM */
+/* EXAM AREA */
 iframe {
   width: calc(100% - 260px);
   height: 100vh;
@@ -244,36 +239,37 @@ iframe {
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
-    background: rgba(0,0,0,0.95);
+    background: #ffffff;
     height: 60px;
   }
-
-  #exitWarningText { display:none; }
 }
 </style>
 </head>
 
 <body>
 
-<!-- START -->
+<!-- START SCREEN -->
 <div id="warningScreen">
+
   <h1>Secured OLC Assessment</h1>
 
   <div id="warningBox">
     <p><b>Duration:</b> 40 minutes</p>
-    <p><b>Rules:</b></p>
+
+    <p><b>Before you start:</b></p>
     <ul>
-      <li>Do not switch tabs during the test</li>
-      <li>Stay in fullscreen where supported</li>
+      <li>Stay on this page during the test</li>
+      <li>Do not switch tabs or apps</li>
+      <li>Stay in full screen where supported</li>
       <li>Your activity is monitored</li>
-      <li>Exit only after submitting</li>
-      <li>3 violations will end the assessment</li>
+      <li>3 warnings will end your test</li>
+      <li>You will get extra time when the timer ends</li>
     </ul>
   </div>
 
   <label>
     <input type="checkbox" id="acceptRules">
-    I accept the rules
+    I understand the rules
   </label>
 
   <br><br>
@@ -288,8 +284,7 @@ iframe {
 <!-- EXIT -->
 <div id="exitWrapper">
   <div id="exitWarningText">Submit before exiting</div>
-  <label><input type="checkbox" id="confirmSubmit"> Submitted</label>
-  <button id="exitTestBtn" disabled>Exit</button>
+  <button id="exitTestBtn">Exit</button>
 </div>
 
 <!-- FULLSCREEN -->
@@ -302,7 +297,7 @@ iframe {
 <div id="timeUpOverlay">
   <div>
     <h1>⏰ Time is up</h1>
-    <p id="graceText">You have 2 minutes to submit your work.</p>
+    <p>You now have extra time to submit your work.</p>
   </div>
 </div>
 
@@ -327,27 +322,15 @@ iframe {
 let examStarted = false;
 let allowExit = false;
 let tabSwitchCount = 0;
-let terminationStarted = false;
 
 let timeLeft = 40 * 60;
-let graceTime = 120;
-let finalTime = 60;
-
-let stage = "normal";
 
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-const supportsFullscreen = !!document.documentElement.requestFullscreen;
-
-/* LOG */
-function logEvent(msg){
-  document.getElementById("logContent").innerHTML += msg + "<br>";
-}
 
 /* START */
 document.getElementById("acceptRules").onchange = (e)=>{
-  const btn = document.getElementById("startBtn");
-  btn.disabled = !e.target.checked;
-  btn.classList.toggle("active", e.target.checked);
+  document.getElementById("startBtn").disabled = !e.target.checked;
+  document.getElementById("startBtn").classList.toggle("active", e.target.checked);
 };
 
 document.getElementById("startBtn").onclick = async ()=>{
@@ -357,143 +340,36 @@ document.getElementById("startBtn").onclick = async ()=>{
   document.getElementById("warningScreen").style.display = "none";
   document.getElementById("exitWrapper").style.display = "flex";
 
-  if(!isMobile && supportsFullscreen){
+  if(!isMobile){
     await document.documentElement.requestFullscreen().catch(()=>{});
   }
 
   startTimer();
 };
 
-/* TIMER SYSTEM */
+/* TIMER (simple version kept stable) */
 function startTimer(){
 
   setInterval(()=>{
 
     const timer = document.getElementById("timer");
 
-    if(stage === "normal"){
+    if(timeLeft > 0){
 
-      if(timeLeft > 0){
-        let m = Math.floor(timeLeft/60);
-        let s = timeLeft%60;
-        timer.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        timeLeft--;
-      } else {
-        startGrace();
-      }
-    }
+      let m = Math.floor(timeLeft/60);
+      let s = timeLeft%60;
 
-    else if(stage === "grace"){
+      timer.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
-      let m = Math.floor(graceTime/60);
-      let s = graceTime%60;
+      timeLeft--;
 
-      timer.textContent = `GRACE ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    } else {
 
-      graceTime--;
-
-      if(graceTime < 0){
-        startFinalWarning();
-      }
-    }
-
-    else if(stage === "final"){
-
-      let m = Math.floor(finalTime/60);
-      let s = finalTime%60;
-
-      timer.textContent = `FINAL ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-      finalTime--;
-
-      if(finalTime < 0){
-        showEndScreen("Assessment is now over");
-      }
+      timer.textContent = "TIME UP";
+      document.getElementById("timeUpOverlay").style.display = "flex";
     }
 
   },1000);
-}
-
-/* STAGES */
-function startGrace(){
-  stage = "grace";
-  document.getElementById("timeUpOverlay").style.display = "flex";
-  logEvent("Grace period started");
-}
-
-function startFinalWarning(){
-  stage = "final";
-
-  document.getElementById("timeUpOverlay").innerHTML = `
-    <div>
-      <h1>⚠ Final Warning</h1>
-      <p>You have 1 minute left before the assessment closes.</p>
-    </div>
-  `;
-
-  logEvent("Final warning started");
-}
-
-/* VIOLATIONS */
-document.addEventListener("visibilitychange",()=>{
-
-  if(!examStarted || allowExit || terminationStarted) return;
-
-  if(document.hidden){
-
-    tabSwitchCount++;
-
-    const counter = document.getElementById("warningCounter");
-    counter.textContent = `Warnings: ${tabSwitchCount} / 3`;
-
-    counter.classList.remove("flash-yellow","flash-red");
-    void counter.offsetWidth;
-
-    if(tabSwitchCount < 3){
-      counter.classList.add("flash-yellow");
-    }
-
-    if(tabSwitchCount >= 3){
-
-      terminationStarted = true;
-      counter.classList.add("flash-red");
-
-      setTimeout(()=>{
-        showEndScreen("3 violations detected");
-      },20000);
-    }
-  }
-});
-
-/* FULLSCREEN */
-document.addEventListener("fullscreenchange",()=>{
-
-  if(!examStarted || isMobile) return;
-
-  if(!document.fullscreenElement && !allowExit){
-    document.getElementById("controlPanel").style.display = "flex";
-  }
-});
-
-/* REENTER */
-document.getElementById("reenterBtn").onclick = async ()=>{
-  await document.documentElement.requestFullscreen();
-  document.getElementById("controlPanel").style.display = "none";
-};
-
-/* END */
-function showEndScreen(reason){
-
-  allowExit = true;
-
-  document.getElementById("finalLockScreen").style.display = "flex";
-  document.getElementById("terminationReason").innerHTML = reason;
-
-  document.querySelector("iframe").style.display = "none";
-  document.getElementById("timer").style.display = "none";
-  document.getElementById("warningCounter").style.display = "none";
-  document.getElementById("exitWrapper").style.display = "none";
-  document.getElementById("logBox").style.display = "none";
 }
 
 </script>
