@@ -143,21 +143,19 @@ body {
   background: grey;
 }
 
-/* FULLSCREEN OVERLAY (FIXED) */
+/* FULLSCREEN OVERLAY */
 #controlPanel {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.95);
   display: none;
   z-index: 999999;
-
   justify-content: center;
   align-items: center;
   flex-direction: column;
   text-align: center;
 }
 
-/* BUTTON FIX */
 #reenterBtn {
   font-size: 28px;
   padding: 25px 45px;
@@ -183,6 +181,29 @@ body {
   padding: 20px;
 }
 
+/* TIME UP OVERLAY */
+#timeUpOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: none;
+  z-index: 10000000;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+#timeUpOverlay h1 {
+  font-size: 40px;
+  color: red;
+}
+
+#timeUpOverlay p {
+  font-size: 22px;
+  max-width: 600px;
+}
+
 /* EXAM */
 iframe {
   width: calc(100% - 260px);
@@ -192,7 +213,6 @@ iframe {
 
 /* MOBILE */
 @media (max-width:768px){
-
   #logBox { display:none; }
 
   #timer, #warningCounter {
@@ -203,7 +223,6 @@ iframe {
     align-items: center;
     justify-content: center;
     font-size: 14px;
-    z-index: 1000;
   }
 
   #timer { left:0; width:50%; }
@@ -227,7 +246,6 @@ iframe {
     align-items: center;
     background: rgba(0,0,0,0.95);
     height: 60px;
-    padding: 8px;
   }
 
   #exitWarningText { display:none; }
@@ -239,19 +257,17 @@ iframe {
 
 <!-- START -->
 <div id="warningScreen">
-
   <h1>Secured OLC Assessment</h1>
 
   <div id="warningBox">
     <p><b>Duration:</b> 40 minutes</p>
-
     <p><b>Rules:</b></p>
     <ul>
-      <li>No tab switching is allowed</li>
-      <li>Fullscreen required (where supported)</li>
-      <li>Monitoring is active</li>
-      <li>Exit only after submission</li>
-      <li>3 violations = termination after 20 seconds</li>
+      <li>Do not switch tabs during the test</li>
+      <li>Stay in fullscreen where supported</li>
+      <li>Your activity is monitored</li>
+      <li>Exit only after submitting</li>
+      <li>3 violations will end the assessment</li>
     </ul>
   </div>
 
@@ -272,25 +288,27 @@ iframe {
 <!-- EXIT -->
 <div id="exitWrapper">
   <div id="exitWarningText">Submit before exiting</div>
-
-  <label>
-    <input type="checkbox" id="confirmSubmit">
-    Submitted
-  </label>
-
+  <label><input type="checkbox" id="confirmSubmit"> Submitted</label>
   <button id="exitTestBtn" disabled>Exit</button>
 </div>
 
-<!-- FULLSCREEN OVERLAY -->
+<!-- FULLSCREEN -->
 <div id="controlPanel">
   <h1>Fullscreen Required</h1>
-  <p>You must return to fullscreen to continue</p>
   <button id="reenterBtn">RETURN TO FULLSCREEN</button>
 </div>
 
-<!-- FINAL SCREEN -->
+<!-- TIME UP -->
+<div id="timeUpOverlay">
+  <div>
+    <h1>⏰ Time is up</h1>
+    <p id="graceText">You have 2 minutes to submit your work.</p>
+  </div>
+</div>
+
+<!-- FINAL -->
 <div id="finalLockScreen">
-  <h1>Assessment Ended</h1>
+  <h1>Assessment is now over</h1>
   <p id="terminationReason"></p>
 </div>
 
@@ -301,7 +319,7 @@ iframe {
 </div>
 
 <!-- EXAM -->
-<iframe src="https://docs.google.com/forms/d/e/1FAIpQLScg1PYiM-h9NnkjDzM0oG0fzyL26ovUesSjnBhBjrysBXXd4g/viewform?embedded=true​"></iframe>
+<iframe src="PASTE_GOOGLE_FORM_LINK_HERE"></iframe>
 
 <script>
 
@@ -310,7 +328,12 @@ let examStarted = false;
 let allowExit = false;
 let tabSwitchCount = 0;
 let terminationStarted = false;
+
 let timeLeft = 40 * 60;
+let graceTime = 120;
+let finalTime = 60;
+
+let stage = "normal";
 
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const supportsFullscreen = !!document.documentElement.requestFullscreen;
@@ -323,13 +346,8 @@ function logEvent(msg){
 /* START */
 document.getElementById("acceptRules").onchange = (e)=>{
   const btn = document.getElementById("startBtn");
-  if(e.target.checked){
-    btn.disabled = false;
-    btn.classList.add("active");
-  } else {
-    btn.disabled = true;
-    btn.classList.remove("active");
-  }
+  btn.disabled = !e.target.checked;
+  btn.classList.toggle("active", e.target.checked);
 };
 
 document.getElementById("startBtn").onclick = async ()=>{
@@ -346,22 +364,74 @@ document.getElementById("startBtn").onclick = async ()=>{
   startTimer();
 };
 
-/* TIMER */
+/* TIMER SYSTEM */
 function startTimer(){
+
   setInterval(()=>{
-    let m = Math.floor(timeLeft/60);
-    let s = timeLeft%60;
 
     const timer = document.getElementById("timer");
 
-    if(timeLeft > 0){
-      timer.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-      timeLeft--;
-    } else {
-      timer.textContent = "TIME EXPIRED";
-      timer.style.background = "red";
+    if(stage === "normal"){
+
+      if(timeLeft > 0){
+        let m = Math.floor(timeLeft/60);
+        let s = timeLeft%60;
+        timer.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        timeLeft--;
+      } else {
+        startGrace();
+      }
     }
+
+    else if(stage === "grace"){
+
+      let m = Math.floor(graceTime/60);
+      let s = graceTime%60;
+
+      timer.textContent = `GRACE ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+      graceTime--;
+
+      if(graceTime < 0){
+        startFinalWarning();
+      }
+    }
+
+    else if(stage === "final"){
+
+      let m = Math.floor(finalTime/60);
+      let s = finalTime%60;
+
+      timer.textContent = `FINAL ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+      finalTime--;
+
+      if(finalTime < 0){
+        showEndScreen("Assessment is now over");
+      }
+    }
+
   },1000);
+}
+
+/* STAGES */
+function startGrace(){
+  stage = "grace";
+  document.getElementById("timeUpOverlay").style.display = "flex";
+  logEvent("Grace period started");
+}
+
+function startFinalWarning(){
+  stage = "final";
+
+  document.getElementById("timeUpOverlay").innerHTML = `
+    <div>
+      <h1>⚠ Final Warning</h1>
+      <p>You have 1 minute left before the assessment closes.</p>
+    </div>
+  `;
+
+  logEvent("Final warning started");
 }
 
 /* VIOLATIONS */
@@ -373,10 +443,8 @@ document.addEventListener("visibilitychange",()=>{
 
     tabSwitchCount++;
 
-    document.getElementById("warningCounter").textContent =
-      `Warnings: ${tabSwitchCount} / 3`;
-
     const counter = document.getElementById("warningCounter");
+    counter.textContent = `Warnings: ${tabSwitchCount} / 3`;
 
     counter.classList.remove("flash-yellow","flash-red");
     void counter.offsetWidth;
@@ -388,7 +456,6 @@ document.addEventListener("visibilitychange",()=>{
     if(tabSwitchCount >= 3){
 
       terminationStarted = true;
-
       counter.classList.add("flash-red");
 
       setTimeout(()=>{
@@ -398,37 +465,29 @@ document.addEventListener("visibilitychange",()=>{
   }
 });
 
-/* FULLSCREEN LOSS */
+/* FULLSCREEN */
 document.addEventListener("fullscreenchange",()=>{
 
   if(!examStarted || isMobile) return;
 
-  if(!document.fullscreenElement && !allowExit && !terminationStarted){
+  if(!document.fullscreenElement && !allowExit){
     document.getElementById("controlPanel").style.display = "flex";
-    logEvent("Fullscreen exited");
   }
 });
 
-/* RE-ENTER FULLSCREEN */
+/* REENTER */
 document.getElementById("reenterBtn").onclick = async ()=>{
-
-  try {
-    await document.documentElement.requestFullscreen();
-    document.getElementById("controlPanel").style.display = "none";
-    logEvent("Fullscreen restored");
-  } catch(e){
-    alert("Please try again to enable fullscreen.");
-  }
+  await document.documentElement.requestFullscreen();
+  document.getElementById("controlPanel").style.display = "none";
 };
 
-/* END SCREEN */
+/* END */
 function showEndScreen(reason){
 
   allowExit = true;
 
   document.getElementById("finalLockScreen").style.display = "flex";
-  document.getElementById("terminationReason").innerHTML =
-    "Reason: " + reason;
+  document.getElementById("terminationReason").innerHTML = reason;
 
   document.querySelector("iframe").style.display = "none";
   document.getElementById("timer").style.display = "none";
